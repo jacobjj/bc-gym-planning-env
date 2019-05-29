@@ -35,13 +35,14 @@ class RandomMiniEnvParams(object):
     mid_margin = attr.ib(default=0.25, type=float)
     out_margin = attr.ib(default=1, type=float)
 
-    min_obstacle_angle = attr.ib(default=np.pi/8., type=float)
+    min_obstacle_angle = attr.ib(default=np.pi / 8., type=float)
     max_obstacle_angle = attr.ib(default=np.pi, type=float)
 
     lim_euc_dist = attr.ib(default=1000, type=float)
     lim_ang_dist = attr.ib(default=np.pi, type=float)
 
     angular_pose_noise_scale = attr.ib(default=np.pi / 2.0, type=float)
+    turn_off_obstacles = attr.ib(type=bool, default=False)
 
     env_params = attr.ib(factory=EnvParams)
 
@@ -130,16 +131,11 @@ def _sample_pose(rng, params, constraints):
     """
     for _ in range(1000):
         pt = OrientedPoint(
-            x=rng.uniform(
-                -params.inner_w / 2 - params.mid_margin,
-                params.inner_w / 2 + params.mid_margin
-            ),
-            y=rng.uniform(
-                -params.inner_h / 2 - params.mid_margin,
-                params.inner_h / 2 + params.mid_margin
-            ),
-            theta=rng.uniform(0, 2*np.pi)
-        )
+            x=rng.uniform(-params.inner_w / 2 - params.mid_margin,
+                          params.inner_w / 2 + params.mid_margin),
+            y=rng.uniform(-params.inner_h / 2 - params.mid_margin,
+                          params.inner_h / 2 + params.mid_margin),
+            theta=rng.uniform(0, 2 * np.pi))
         if _satisfies_constraints(pt, constraints):
             return pt
 
@@ -160,10 +156,10 @@ def _sample_pose_circ(rng, params, constraints):
         r = (params.inner_w + params.inner_h) / 4. + params.mid_margin
         r = min(r, params.lim_euc_dist)
 
-        phi = rng.uniform(0, 2*np.pi)
+        phi = rng.uniform(0, 2 * np.pi)
 
         x, y = pol2cart(r, phi)
-        theta = rng.uniform(0, 2*np.pi)
+        theta = rng.uniform(0, 2 * np.pi)
         # theta_e = rng.uniform(0, 2*np.pi)
 
         # while np.abs(theta - theta_e) >= params.lim_ang_dist:
@@ -183,10 +179,12 @@ def _sample_pose_circ(rng, params, constraints):
                 _satisfies_constraints(end_pt, constraints):
             return start_pt, end_pt
 
-    raise SpaceSeemsEmptyError("Something went wrong, the sampling space looks empty.")
+    raise SpaceSeemsEmptyError(
+        "Something went wrong, the sampling space looks empty.")
 
 
-def _pick_pts_square_method(rng, params, obstacle_o, obstacle_start_angle, obstacle_angle):
+def _pick_pts_square_method(rng, params, obstacle_o, obstacle_start_angle,
+                            obstacle_angle):
     """
     Sample the ending and starting pose for the square method.
     Just sample uniformly pose from the inner square.
@@ -198,13 +196,16 @@ def _pick_pts_square_method(rng, params, obstacle_o, obstacle_start_angle, obsta
     :param obstacle_angle float: how wide angularly is the obstacle
     :return Tuple(OrientedPoint, OrientedPoint): starting pose and ending pose
     """
+
     # sample start pt
     def not_inside_obstacle(pt):
         _, phi = cart2pol(pt.x - obstacle_o.x, pt.y - obstacle_o.y)
-        if (phi >= obstacle_start_angle) and (phi <= obstacle_start_angle + obstacle_angle):
+        if (phi >= obstacle_start_angle) and (
+                phi <= obstacle_start_angle + obstacle_angle):
             # inside obstacle
             return False
-        elif (phi + 2 * np.pi >= obstacle_start_angle) and (phi + 2 * np.pi <= obstacle_start_angle + obstacle_angle):
+        elif (phi + 2 * np.pi >= obstacle_start_angle) and (
+                phi + 2 * np.pi <= obstacle_start_angle + obstacle_angle):
             # inside obstacle
             return False
         else:
@@ -218,13 +219,13 @@ def _pick_pts_square_method(rng, params, obstacle_o, obstacle_start_angle, obsta
         return dist < params.lim_ang_dist
 
     def not_far_from_start_euc(pt):
-        dist = np.linalg.norm(np.array([start_pos.x - pt.x, start_pos.y - pt.y]))
+        dist = np.linalg.norm(
+            np.array([start_pos.x - pt.x, start_pos.y - pt.y]))
         return dist < params.lim_euc_dist
 
-    end_pos = _sample_pose(rng, params,
-                           [not_inside_obstacle,
-                            not_far_from_start_ang,
-                            not_far_from_start_euc])
+    end_pos = _sample_pose(
+        rng, params,
+        [not_inside_obstacle, not_far_from_start_ang, not_far_from_start_euc])
 
     y = end_pos.y - start_pos.y
     x = end_pos.x - start_pos.x
@@ -236,7 +237,8 @@ def _pick_pts_square_method(rng, params, obstacle_o, obstacle_start_angle, obsta
     return start_pos, end_pos
 
 
-def _pick_pts_circle_method(rng, params, obstacle_o, obstacle_start_angle, obstacle_angle):
+def _pick_pts_circle_method(rng, params, obstacle_o, obstacle_start_angle,
+                            obstacle_angle):
     """
     Randomly sample a mini env. Actually you sample parameters of a mini env,
     but these can be used to construct a given MiniEnv.
@@ -253,12 +255,15 @@ def _pick_pts_circle_method(rng, params, obstacle_o, obstacle_start_angle, obsta
     :param obstacle_angle float: how wide angularly is the obstacle
     :return MiniEnvParams: sampled params of the environment
     """
+
     def not_inside_obstacle(pt):
         _, phi = cart2pol(pt.x - obstacle_o.x, pt.y - obstacle_o.y)
-        if (phi >= obstacle_start_angle) and (phi <= obstacle_start_angle + obstacle_angle):
+        if (phi >= obstacle_start_angle) and (
+                phi <= obstacle_start_angle + obstacle_angle):
             # inside obstacle
             return False
-        elif (phi + 2 * np.pi >= obstacle_start_angle) and (phi + 2 * np.pi <= obstacle_start_angle + obstacle_angle):
+        elif (phi + 2 * np.pi >= obstacle_start_angle) and (
+                phi + 2 * np.pi <= obstacle_start_angle + obstacle_angle):
             # inside obstacle
             return False
         else:
@@ -284,40 +289,46 @@ def _sample_mini_env_params_no_final_check(params, rng):
     :param rng np.random.RandomState: independent random state
     :return MiniEnvParams: sampled params of the environment
     """
-    obstacle_o = Point(
-        x=rng.uniform(-params.inner_w / 2, params.inner_w / 2),
-        y=rng.uniform(-params.inner_h / 2, params.inner_h / 2)
-    )
+    obstacle_o = Point(x=rng.uniform(-params.inner_w / 2, params.inner_w / 2),
+                       y=rng.uniform(-params.inner_h / 2, params.inner_h / 2))
 
-    obstacle_start_angle = rng.uniform(0, 2*np.pi)
-    obstacle_angle = rng.uniform(
-        params.min_obstacle_angle,
-        params.max_obstacle_angle
-    )
-    r = 3 * (params.inner_h + params.inner_w + params.mid_margin + params.out_margin)
+    obstacle_start_angle = rng.uniform(0, 2 * np.pi)
+    obstacle_angle = rng.uniform(params.min_obstacle_angle,
+                                 params.max_obstacle_angle)
+    r = 3 * (params.inner_h + params.inner_w + params.mid_margin +
+             params.out_margin)
 
-    obstacle_a = _point_from_polar(r, obstacle_start_angle, obstacle_o.x, obstacle_o.y)
-    obstacle_b = _point_from_polar(r, obstacle_start_angle + obstacle_angle, obstacle_o.x, obstacle_o.y)
+    obstacle_a = _point_from_polar(r, obstacle_start_angle, obstacle_o.x,
+                                   obstacle_o.y)
+    obstacle_b = _point_from_polar(r, obstacle_start_angle + obstacle_angle,
+                                   obstacle_o.x, obstacle_o.y)
 
     h = params.inner_h + 2 * params.mid_margin + 2 * params.out_margin
     w = params.inner_w + 2 * params.mid_margin + 2 * params.out_margin
 
     if rng.rand() < 0.7:
         start_pos, end_pos = _pick_pts_circle_method(rng, params, obstacle_o,
-                                                     obstacle_start_angle, obstacle_angle)
+                                                     obstacle_start_angle,
+                                                     obstacle_angle)
     else:
         start_pos, end_pos = _pick_pts_square_method(rng, params, obstacle_o,
-                                                     obstacle_start_angle, obstacle_angle)
+                                                     obstacle_start_angle,
+                                                     obstacle_angle)
 
     # inject some angular noise into start and end poses
-    angular_noise = rng.uniform(- params.angular_pose_noise_scale / 2.0, params.angular_pose_noise_scale / 2.0)
-    new_start_pos = OrientedPoint(start_pos.x, start_pos.y, start_pos.theta + angular_noise)
-    angular_noise = rng.uniform(- params.angular_pose_noise_scale / 2.0, params.angular_pose_noise_scale / 2.0)
-    new_end_pos = OrientedPoint(end_pos.x, end_pos.y, end_pos.theta + angular_noise)
+    angular_noise = rng.uniform(-params.angular_pose_noise_scale / 2.0,
+                                params.angular_pose_noise_scale / 2.0)
+    new_start_pos = OrientedPoint(start_pos.x, start_pos.y,
+                                  start_pos.theta + angular_noise)
+    angular_noise = rng.uniform(-params.angular_pose_noise_scale / 2.0,
+                                params.angular_pose_noise_scale / 2.0)
+    new_end_pos = OrientedPoint(end_pos.x, end_pos.y,
+                                end_pos.theta + angular_noise)
 
-    out_params = MiniEnvParams(
-        h, w, new_start_pos, new_end_pos, obstacle_a, obstacle_o, obstacle_b, params.env_params
-    )
+    turn_off_obstacles = params.turn_off_obstacles
+    out_params = MiniEnvParams(h, w, new_start_pos, new_end_pos, obstacle_a,
+                               obstacle_o, obstacle_b, turn_off_obstacles,
+                               params.env_params)
 
     return out_params
 
@@ -335,12 +346,14 @@ def _sample_mini_env_params(gen_params, rng):
     for _ in range(1000):
         # We need to check for collisions of start and
         try:
-            drawn_params = _sample_mini_env_params_no_final_check(gen_params, rng)
+            drawn_params = _sample_mini_env_params_no_final_check(
+                gen_params, rng)
         except SpaceSeemsEmptyError:
             continue
 
         costmap, static_path = prepare_map_and_path(drawn_params)
-        robot = TricycleRobot(dimensions=get_dimensions_example(gen_params.env_params.robot_name))
+        robot = TricycleRobot(dimensions=get_dimensions_example(
+            gen_params.env_params.robot_name))
         robot.set_front_wheel_angle(gen_params.env_params.initial_wheel_angle)
 
         x, y, angle = static_path[0]
@@ -377,13 +390,14 @@ def prepare_map_and_path(params):
              to_pt=params.obstacle_b.as_np()),
     ]
 
-    coarse_static_path = np.array([params.start_pos.as_np(), params.end_pos.as_np()])
+    coarse_static_path = np.array(
+        [params.start_pos.as_np(),
+         params.end_pos.as_np()])
 
     static_map = CostMap2D.create_empty(
         world_size=(params.h, params.w),  # x width, y height
         resolution=params.env_params.resolution,
-        world_origin=(-params.h / 2., -params.w /2.)
-    )
+        world_origin=(-params.h / 2., -params.w / 2.))
 
     if not params.turn_off_obstacles:
         for obs in obstacles:
@@ -398,6 +412,7 @@ class MiniEnv(PlanEnv):
     is to run from point to point and these are not too far.
     In the environment there is only one obstacle.
     """
+
     def __init__(self, config):
         """
         initialize the MiniEnv
@@ -415,7 +430,13 @@ class RandomMiniEnv(object):
     if draw_new_turn_on_reset is True, it samples new turn
     on env.reset(), otherwise it keeps showing same turn.
     """
-    def __init__(self, params=None, draw_new_turn_on_reset=True, seed=None, rng=None):
+
+    def __init__(self,
+                 params=None,
+                 draw_new_turn_on_reset=True,
+                 turn_off_obstacles=False,
+                 seed=None,
+                 rng=None):
         """
         Initialize random mini environment.
 
@@ -429,7 +450,8 @@ class RandomMiniEnv(object):
                 env_params=EnvParams(
                     goal_ang_dist=np.pi / 8.,
                     goal_spat_dist=0.2,
-                )
+                ),
+                turn_off_obstacles=turn_off_obstacles,
             )
         else:
             self._params = params
