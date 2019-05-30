@@ -124,7 +124,7 @@ class ContinuousRewardPurePursuitProviderState(Serializable):
         :return np.ndarray(N, 3): the piece of static path left to follow
         """
         # pylint: disable=unsubscriptable-object
-        return self.path[:self.target_idx+1]
+        return self.path[:self.target_idx + 1]
 
     def update_goal(self, pose, radius=2.):
         """
@@ -224,12 +224,9 @@ class ContinuousRewardProvider(object):
             return 0.0
 
         # See if you have reached any new point
-        last_reached_idx = find_last_reached(
-            state.pose,
-            self._state.path,
-            self._params.spatial_precision,
-            self._params.angular_precision
-        )
+        last_reached_idx = find_last_reached(state.pose, self._state.path,
+                                             self._params.spatial_precision,
+                                             self._params.angular_precision)
 
         if last_reached_idx is not None and last_reached_idx >= self._state.target_idx:
             # assign the reward for reaching a waypoint
@@ -239,7 +236,8 @@ class ContinuousRewardProvider(object):
 
             # set up the new waypoint
             if not self._state.done():
-                dist_to_goal, _ = pose_distances(self._state.current_goal_pose(), state.pose)
+                dist_to_goal, _ = pose_distances(
+                    self._state.current_goal_pose(), state.pose)
                 self._state.min_spat_dist_so_far = dist_to_goal
             else:
                 self._state.min_spat_dist_so_far = 0.0
@@ -247,7 +245,8 @@ class ContinuousRewardProvider(object):
             return 1.0
         else:
             # maybe we get some progress towards current waypoint
-            dist_to_goal, _ = pose_distances(self._state.current_goal_pose(), state.pose)
+            dist_to_goal, _ = pose_distances(self._state.current_goal_pose(),
+                                             state.pose)
 
             if dist_to_goal < self._state.min_spat_dist_so_far:
                 # We progressed toward the current waypoint
@@ -266,11 +265,9 @@ class ContinuousRewardProvider(object):
         :return ContinuousRewardProviderState: the initial state of the reward provider
         """
         initial_pose = path[0]
-        last_reached_idx = find_last_reached(
-            initial_pose, path,
-            params.spatial_precision,
-            params.angular_precision
-        )
+        last_reached_idx = find_last_reached(initial_pose, path,
+                                             params.spatial_precision,
+                                             params.angular_precision)
 
         if last_reached_idx == len(path) - 1:
             # We are out of path to follow at the beginning!
@@ -281,11 +278,9 @@ class ContinuousRewardProvider(object):
         goal_pose = path[target_idx]
         dist_to_goal, _ = pose_distances(goal_pose, initial_pose)
 
-        return ContinuousRewardProviderState(
-            min_spat_dist_so_far=dist_to_goal,
-            path=path,
-            target_idx=target_idx
-        )
+        return ContinuousRewardProviderState(min_spat_dist_so_far=dist_to_goal,
+                                             path=path,
+                                             target_idx=target_idx)
 
 
 @attr.s
@@ -295,8 +290,10 @@ class ContinuousRewardPurePursuitProvider(object):
     If we reach any waypoint, our goal is the next waypoint.
      """
     _params = attr.ib(type=RewardParams)
-    _state = attr.ib(type=ContinuousRewardPurePursuitProviderState, default=None)
-    _initial_state = attr.ib(type=ContinuousRewardPurePursuitProviderState, default=None)
+    _state = attr.ib(type=ContinuousRewardPurePursuitProviderState,
+                     default=None)
+    _initial_state = attr.ib(type=ContinuousRewardPurePursuitProviderState,
+                             default=None)
 
     def set_state(self, state):
         """ Set the state of the environment
@@ -340,11 +337,9 @@ class ContinuousRewardPurePursuitProvider(object):
 
         self._state.update_goal(state.pose)
 
-        reward = -0.05
-
-        dist_to_goal, _ = pose_distances(self._state.current_goal_pose(), state.pose)
-        reward += self._state.min_spat_dist_so_far - dist_to_goal
-        self._state.min_spat_dist_so_far = dist_to_goal
+        dist_to_goal, _ = pose_distances(self._state.current_goal_pose(),
+                                         state.pose)
+        reward = -dist_to_goal
 
         if state.robot_collided:
             reward -= 100
@@ -352,7 +347,7 @@ class ContinuousRewardPurePursuitProvider(object):
         return reward
 
     @staticmethod
-    def generate_initial_state(path, params):   # pylint: disable=unused-argument
+    def generate_initial_state(path, params):  # pylint: disable=unused-argument
         """ Generate the initial state of the reward provider.
         :param path np.ndarray(N, 3): the static path
         :param params RewardParams: parametrization of the reward provider, not used here but kept it for consistent API call
@@ -367,5 +362,4 @@ class ContinuousRewardPurePursuitProvider(object):
         return ContinuousRewardPurePursuitProviderState(
             min_spat_dist_so_far=dist_to_goal,
             path=path,
-            target_idx=target_idx
-        )
+            target_idx=target_idx)
