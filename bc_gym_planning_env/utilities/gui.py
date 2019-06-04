@@ -12,6 +12,7 @@ from bc_gym_planning_env.envs.base.action import Action
 
 class OpenCVGui(object):
     """Display an image with OpenCV"""
+
     def __init__(self):
         self._window_name = None
 
@@ -27,7 +28,9 @@ class OpenCVGui(object):
             cv2.moveWindow(self._window_name, 500, 200)
             if platform == "darwin":
                 # bring window to front
-                os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
+                os.system(
+                    '''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' '''
+                )
 
         cv2.imshow(self._window_name, image)
         cv2.waitKey(1)
@@ -53,6 +56,7 @@ class KeyCapturePlay(object):
         p.before_env_step()
         p.env_step()
     """
+
     def __init__(self, env):
         """
         Initialize the wrapper of the environment.
@@ -81,7 +85,9 @@ class KeyCapturePlay(object):
             cv2.moveWindow(self._window_name, 500, 200)
             if platform == "darwin":
                 # bring window to front
-                os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' ''')
+                os.system(
+                    '''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "python" to true' '''
+                )
 
         cv2.imshow(self._window_name, img)
         key = cv2.waitKey(0)
@@ -136,7 +142,9 @@ class KeyCapturePlay(object):
             action[0] = 0.5 * v
         if w is not None:
             coeff = np.pi / 2.0 * 0.1
-            self._front_wheel_steering_rotation_state = np.clip(self._front_wheel_steering_rotation_state + coeff * w, -np.pi / 2.0, np.pi / 2.0)
+            self._front_wheel_steering_rotation_state = np.clip(
+                self._front_wheel_steering_rotation_state + coeff * w,
+                -np.pi / 2.0, np.pi / 2.0)
             action[1] = self._front_wheel_steering_rotation_state
 
         print(80 * '=')
@@ -154,9 +162,10 @@ class KeyCapturePlay(object):
     def post_env_step(self):
         """ Perform actions after the step of the environment """
         if len(self._observation.path):
-            print("pose is {}, wanted pose is {}".format(self._observation.pose, self._observation.path[-1]))
+            print("pose is {}, wanted pose is {}".format(
+                self._observation.pose, self._observation.path[-1]))
         else:
             print("No path left!")
 
-        if self._reward:
-            print("reward = {}".format(self._reward))
+        # Removed the if condition to display reward when it is zero
+        print("reward = {}".format(self._reward))

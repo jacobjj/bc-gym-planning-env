@@ -336,10 +336,12 @@ class ContinuousRewardPurePursuitProvider(object):
         """
 
         self._state.update_goal(state.pose)
+        robot_pose = state.pose
+        spat_dist, _ = pose_distances(self._state.current_goal_pose(),
+                                      robot_pose)
+        spat_near = spat_dist < 1.0
 
-        dist_to_goal, _ = pose_distances(self._state.current_goal_pose(),
-                                         state.pose)
-        reward = -dist_to_goal
+        reward = -float(not spat_near)
 
         if state.robot_collided:
             reward -= 100
