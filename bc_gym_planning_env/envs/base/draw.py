@@ -6,7 +6,15 @@ from bc_gym_planning_env.utilities.map_drawing_utils import get_drawing_coordina
     get_drawing_angle_from_physical, draw_world_map, draw_wide_path, prepare_canvas
 
 
-def draw_robot(robot, image, x, y, angle, color, costmap, alpha=1.0, draw_steering_details=True):
+def draw_robot(robot,
+               image,
+               x,
+               y,
+               angle,
+               color,
+               costmap,
+               alpha=1.0,
+               draw_steering_details=True):
     """
     Draw robot on the image
     :param robot IRobot: the robot that will supply the draw function
@@ -24,8 +32,14 @@ def draw_robot(robot, image, x, y, angle, color, costmap, alpha=1.0, draw_steeri
                                                    costmap.get_origin(),
                                                    (x, y))
     pangle = get_drawing_angle_from_physical(angle)
-    robot.draw(image, px, py, pangle, color, costmap.get_resolution(),
-               alpha=alpha, draw_steering_details=draw_steering_details)
+    robot.draw(image,
+               px,
+               py,
+               pangle,
+               color,
+               costmap.get_resolution(),
+               alpha=alpha,
+               draw_steering_details=draw_steering_details)
 
 
 def draw_environment(path_to_follow, original_path, robot, costmap):
@@ -40,29 +54,27 @@ def draw_environment(path_to_follow, original_path, robot, costmap):
     """
     img = prepare_canvas(costmap.get_data().shape)
 
-    draw_wide_path(
-        img, original_path,
-        robot_width=2 * inscribed_radius(robot.get_footprint()),
-        origin=costmap.get_origin(),
-        resolution=costmap.get_resolution(),
-        color=(240, 240, 240)
-    )
+    draw_wide_path(img,
+                   original_path,
+                   robot_width=2 * inscribed_radius(robot.get_footprint()),
+                   origin=costmap.get_origin(),
+                   resolution=costmap.get_resolution(),
+                   color=(240, 240, 240))
 
     if len(path_to_follow):
-        draw_wide_path(
-            img, path_to_follow,
-            robot_width=2 * inscribed_radius(robot.get_footprint()),
-            origin=costmap.get_origin(),
-            resolution=costmap.get_resolution(),
-            color=(220, 220, 220)
-        )
+        draw_wide_path(img,
+                       path_to_follow,
+                       robot_width=2 * inscribed_radius(robot.get_footprint()),
+                       origin=costmap.get_origin(),
+                       resolution=costmap.get_resolution(),
+                       color=(220, 220, 220))
 
     x, y, angle = robot.get_pose()
     draw_robot(robot, img, x, y, angle, color=(0, 100, 0), costmap=costmap)
     draw_world_map(img, costmap.get_data())
 
-    for pose in path_to_follow:
-        x, y, angle = pose
-        draw_robot(robot, img, x, y, angle, color=(100, 0, 0), costmap=costmap, alpha=0.1, draw_steering_details=False)
+    # for pose in path_to_follow:
+    #     x, y, angle = pose
+    #     draw_robot(robot, img, x, y, angle, color=(100, 0, 0), costmap=costmap, alpha=0.1, draw_steering_details=False)
 
     return img
