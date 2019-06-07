@@ -170,7 +170,8 @@ class EgocentricCostmap(ObservationWrapper):
             # normalized_goal = ego_path[0, :2] / ego_costmap.world_size()
             # normalized_goal = np.clip(normalized_goal, (-1., -1.), (1., 1.))
             # Just pass the actual goal, rather than normalizing it!!
-            goal = ego_path[0, :2]
+            # goal = ego_path[0, :2]
+            goal = np.array([0.0] * 2)
             goal_pose = np.hstack([goal, ego_path[0, 2]])
             goal_n_state = np.hstack(
                 [goal_pose,
