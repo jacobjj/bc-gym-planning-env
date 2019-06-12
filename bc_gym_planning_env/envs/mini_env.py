@@ -436,7 +436,8 @@ class RandomMiniEnv(object):
                  draw_new_turn_on_reset=True,
                  turn_off_obstacles=False,
                  seed=None,
-                 rng=None):
+                 rng=None,
+                 iteration_timeout=1200):
         """
         Initialize random mini environment.
 
@@ -450,6 +451,7 @@ class RandomMiniEnv(object):
                 env_params=EnvParams(
                     goal_ang_dist=np.pi / 8.,
                     goal_spat_dist=0.2,
+                    iteration_timeout=iteration_timeout,
                 ),
                 turn_off_obstacles=turn_off_obstacles,
             )

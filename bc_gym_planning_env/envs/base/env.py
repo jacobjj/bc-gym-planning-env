@@ -84,8 +84,7 @@ class State(Serializable):
             poses_queue=copy.deepcopy(self.poses_queue),
             robot_state_queue=copy.deepcopy(self.robot_state_queue),
             control_queue=copy.deepcopy(self.control_queue),
-            robot_state=self.robot_state.copy()
-        )
+            robot_state=self.robot_state.copy())
 
     def __eq__(self, other):
         # pylint: disable=too-many-return-statements
@@ -144,15 +143,19 @@ class State(Serializable):
 
         state['costmap'] = CostMap2D.from_state(state['costmap'])
 
-        reward_provider_state_instance = create_reward_provider_state(state.pop('reward_provider_state_name'))
-        state['reward_provider_state'] = reward_provider_state_instance.deserialize(state['reward_provider_state'])
+        reward_provider_state_instance = create_reward_provider_state(
+            state.pop('reward_provider_state_name'))
+        state[
+            'reward_provider_state'] = reward_provider_state_instance.deserialize(
+                state['reward_provider_state'])
 
         # prepare for robot state deserialization
         robot_instance = create_standard_robot(state.pop('robot_type_name'))
         robot_state_type = robot_instance.get_state_type()
 
         # deserialize the robot state
-        state['robot_state'] = robot_state_type.deserialize(state['robot_state'])
+        state['robot_state'] = robot_state_type.deserialize(
+            state['robot_state'])
 
         # deserialize robot state queue
         acc = []
@@ -168,7 +171,9 @@ class State(Serializable):
         # pylint: disable=no-member
         resu['version'] = self.VERSION
         resu['costmap'] = self.costmap.get_state()
-        resu['reward_provider_state_type_name'] = self.reward_provider_state.get_reward_provider_state_type_name()
+        resu[
+            'reward_provider_state_type_name'] = self.reward_provider_state.get_reward_provider_state_type_name(
+            )
         resu['reward_provider_state'] = self.reward_provider_state.serialize()
         resu['robot_type_name'] = self.robot_state.get_robot_type_name()
         resu['robot_state'] = self.robot_state.serialize()
@@ -196,10 +201,12 @@ def make_initial_state(path, costmap, robot, reward_provider, params):
     robot_state = robot.get_initial_state()
     robot_state.set_pose(initial_pose)
 
-    initial_reward_provider_state = reward_provider.generate_initial_state(path, params.reward_provider_params)
+    initial_reward_provider_state = reward_provider.generate_initial_state(
+        path, params.reward_provider_params)
     return State(
         reward_provider_state=initial_reward_provider_state,
-        path=np.ascontiguousarray(initial_reward_provider_state.current_path()),
+        path=np.ascontiguousarray(
+            initial_reward_provider_state.current_path()),
         original_path=np.copy(np.ascontiguousarray(path)),
         costmap=costmap,
         iter_timeout=params.iteration_timeout,
@@ -216,6 +223,7 @@ def make_initial_state(path, costmap, robot, reward_provider, params):
 
 class PlanEnv(Serializable):
     """ Poses planning problem as OpenAI gym task. """
+
     def __init__(self, costmap, path, params):
         """
         :param costmap CostMap2D: costmap denoting obstacles
@@ -223,21 +231,27 @@ class PlanEnv(Serializable):
         :param params EnvParams: parametrization of the environment
         """
         # Stateful things
-        self._robot = TricycleRobot(dimensions=get_dimensions_example(params.robot_name))
-        reward_provider_example = get_reward_provider_example(params.reward_provider_name)
-        self._reward_provider = reward_provider_example(params=params.reward_provider_params)
+        self._robot = TricycleRobot(
+            dimensions=get_dimensions_example(params.robot_name))
+        reward_provider_example = get_reward_provider_example(
+            params.reward_provider_name)
+        self._reward_provider = reward_provider_example(
+            params=params.reward_provider_params)
 
         # Properties, things without state
         self.action_space = spaces.Box(
-            low=np.array([self._robot.get_max_front_wheel_speed() / 10, -np.pi/2]),
-            high=np.array([self._robot.get_max_front_wheel_speed() / 2, np.pi/2]),
+            low=np.array(
+                [self._robot.get_max_front_wheel_speed() / 10, -np.pi / 2]),
+            high=np.array(
+                [self._robot.get_max_front_wheel_speed() / 2, np.pi / 2]),
             dtype=np.float32)
         self.reward_range = (0.0, 1.0)
         self._gui = OpenCVGui()
         self._params = params
 
         # State
-        self._state = make_initial_state(path, costmap, self._robot, self._reward_provider, params)
+        self._state = make_initial_state(path, costmap, self._robot,
+                                         self._reward_provider, params)
         self._initial_state = self._state.copy()
 
         self.set_state(self._state)
@@ -306,7 +320,8 @@ class PlanEnv(Serializable):
         if mode not in ['human', 'rgb_array']:
             raise NotImplementedError
 
-        img = draw_environment(self._state.path, self._state.original_path, self._robot, self._state.costmap)
+        img = draw_environment(self._state.path, self._state.original_path,
+                               self._robot, self._state.costmap)
 
         if mode == 'human':
             return self._gui.display(img)
@@ -363,24 +378,21 @@ class PlanEnv(Serializable):
         """
 
         delayed_action = _get_element_from_list_with_delay(
-            state.control_queue, action, self._params.control_delay
-        )
+            state.control_queue, action, self._params.control_delay)
 
-        collided = _env_step(self._state.costmap, self._robot, self._params.dt, delayed_action)
+        collided = _env_step(self._state.costmap, self._robot, self._params.dt,
+                             delayed_action)
 
         pose = self._robot.get_pose()
         delayed_pose = _get_element_from_list_with_delay(
-            state.poses_queue, pose, self._params.pose_delay
-        )
+            state.poses_queue, pose, self._params.pose_delay)
 
         current_time = state.current_time + self._params.dt
         current_iter = state.current_iter + 1
 
         robot_state = self._robot.get_state()
         delayed_robot_state = _get_element_from_list_with_delay(
-            state.robot_state_queue, robot_state, self._params.state_delay
-
-        )
+            state.robot_state_queue, robot_state, self._params.state_delay)
 
         state.current_time = current_time
         state.current_iter = current_iter
@@ -417,14 +429,12 @@ class PlanEnv(Serializable):
         Extract an observation from the environment.
         :return Observation: the observation to process
         """
-        return Observation(
-            pose=self._state.pose,
-            path=self._state.path,
-            costmap=self._state.costmap,
-            robot_state=self._state.robot_state,
-            time=self._state.current_time,
-            dt=self._params.dt
-        )
+        return Observation(pose=self._state.pose,
+                           path=self._state.path,
+                           costmap=self._state.costmap,
+                           robot_state=self._state.robot_state,
+                           time=self._state.current_time,
+                           dt=self._params.dt)
 
     @staticmethod
     def _extract_info():
@@ -466,18 +476,24 @@ def pose_collides(x, y, angle, robot, costmap):
     :param costmap Costmap2D: costmap containing the obstacles to collide with
     :return bool : does the pose collide?
     """
-    kernel_image = get_pixel_footprint(angle, robot.get_footprint(), costmap.get_resolution())
+    kernel_image = get_pixel_footprint(angle, robot.get_footprint(),
+                                       costmap.get_resolution())
     # Get the coordinates of where the footprint is inside the kernel_image (on pixel coordinates)
     kernel = np.where(kernel_image)
     # Move footprint to (x,y), all in pixel coordinates
-    x, y = world_to_pixel(np.array([x, y]), costmap.get_origin(), costmap.get_resolution())
-    collisions = y + kernel[0] - kernel_image.shape[0] // 2, x + kernel[1] - kernel_image.shape[1] // 2
+    x, y = world_to_pixel(np.array([x, y]), costmap.get_origin(),
+                          costmap.get_resolution())
+    collisions = y + kernel[0] - kernel_image.shape[0] // 2, x + kernel[
+        1] - kernel_image.shape[1] // 2
     raw_map = costmap.get_data()
     # Check if the footprint pixel coordinates are valid, this is, if they are not negative and are inside the map
-    good = np.logical_and(np.logical_and(collisions[0] >= 0, collisions[0] < raw_map.shape[0]),
-                          np.logical_and(collisions[1] >= 0, collisions[1] < raw_map.shape[1]))
+    good = np.logical_and(
+        np.logical_and(collisions[0] >= 0, collisions[0] < raw_map.shape[0]),
+        np.logical_and(collisions[1] >= 0, collisions[1] < raw_map.shape[1]))
 
     # Just from the footprint coordinates that are good, check if they collide
     # with obstacles inside the map
-    return bool(np.any(raw_map[collisions[0][good],
-                               collisions[1][good]] == CostMap2D.LETHAL_OBSTACLE))
+
+    return bool(
+        np.any(raw_map[collisions[0][good], collisions[1][good]] ==
+               CostMap2D.LETHAL_OBSTACLE))
