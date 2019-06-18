@@ -167,15 +167,11 @@ class EgocentricCostmap(ObservationWrapper):
                  np.expand_dims(
                      np.zeros(size_of_goal_n_state, dtype=np.float32), -1))))
         else:
-            # normalized_goal = ego_path[0, :2] / ego_costmap.world_size()
-            # normalized_goal = np.clip(normalized_goal, (-1., -1.), (1., 1.))
-            # Just pass the actual goal, rather than normalizing it!!
-            # goal = ego_path[0, :2]
-            goal = np.array([0.0] * 2)
-            goal_pose = np.hstack([goal, ego_path[0, 2]])
+            normalized_goal = ego_path[0, :2] / ego_costmap.world_size()
+            normalized_goal = np.clip(normalized_goal, (-1., -1.), (1., 1.))
             world_size = ego_costmap.world_size()
             goal_n_state = np.hstack(
-                [goal_pose,
+                [normalized_goal,
                  observation.robot_state.to_numpy_array()])
             # observation.robot_state is: wheel_angle, measured_v, measured_w, steering_motor_command
             return OrderedDict(
