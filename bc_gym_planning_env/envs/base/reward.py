@@ -341,7 +341,10 @@ class ContinuousRewardPurePursuitProvider(object):
                                       robot_pose)
         spat_near = spat_dist < 0.05
 
-        reward = -float(not spat_near)
+        if spat_near:
+            reward = 200.0
+        else:
+            reward = -float(not spat_near)
 
         if state.robot_collided:
             reward -= 100
