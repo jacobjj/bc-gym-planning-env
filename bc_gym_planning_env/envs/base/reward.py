@@ -147,7 +147,7 @@ class ContinuousRewardPurePursuitProviderState(Serializable):
         :return bool: True if we are done with this environment. """
         robot_pose = state.pose
         spat_dist, _ = pose_distances(self.current_goal_pose(), robot_pose)
-        spat_near = spat_dist < 0.05
+        spat_near = spat_dist < 0.1
         goal_reached = spat_near
 
         return goal_reached
@@ -339,7 +339,7 @@ class ContinuousRewardPurePursuitProvider(object):
         robot_pose = state.pose
         spat_dist, _ = pose_distances(self._state.current_goal_pose(),
                                       robot_pose)
-        spat_near = spat_dist < 0.05
+        spat_near = spat_dist < 0.1
 
         if spat_near:
             reward = 200.0
