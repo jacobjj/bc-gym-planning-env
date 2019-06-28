@@ -69,6 +69,17 @@ def draw_environment(path_to_follow, original_path, robot, costmap):
                        resolution=costmap.get_resolution(),
                        color=(220, 220, 220))
 
+    # Draw goal:
+    goal_x, goal_y, goal_theta = original_path[-1]
+    draw_robot(robot,
+               img,
+               goal_x,
+               goal_y,
+               goal_theta,
+               color=(240, 240, 240),
+               costmap=costmap,
+               draw_steering_details=False)
+
     x, y, angle = robot.get_pose()
     draw_robot(robot, img, x, y, angle, color=(0, 100, 0), costmap=costmap)
     draw_world_map(img, costmap.get_data())
