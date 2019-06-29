@@ -141,13 +141,13 @@ class ContinuousRewardPurePursuitProviderState(Serializable):
         self.target_idx = len(self.path) - 1
         return self.target_idx  # if no valid point, return last point
 
-    def done(self, state):
+    def done(self, state, spatial_precision):
         """ Are we done?
         :param state: current state of the environment
         :return bool: True if we are done with this environment. """
         robot_pose = state.pose
         spat_dist, _ = pose_distances(self.current_goal_pose(), robot_pose)
-        spat_near = spat_dist < 0.5
+        spat_near = spat_dist < spatial_precision
         goal_reached = spat_near
 
         return goal_reached
@@ -323,7 +323,7 @@ class ContinuousRewardPurePursuitProvider(object):
         :param state: current state of the environment
         :return float: whether this episode is finished or not
         """
-        return self._state.done(state)
+        return self._state.done(state, self._params.spatial_precision)
 
     def reward(self, state):
         """
@@ -339,7 +339,8 @@ class ContinuousRewardPurePursuitProvider(object):
         robot_pose = state.pose
         spat_dist, _ = pose_distances(self._state.current_goal_pose(),
                                       robot_pose)
-        spat_near = spat_dist < 0.5
+
+        spat_near = spat_dist < self._params.spatial_precision
 
         if spat_near:
             reward = 200.0
