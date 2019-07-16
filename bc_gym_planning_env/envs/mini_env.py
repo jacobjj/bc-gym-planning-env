@@ -390,7 +390,7 @@ def prepare_map_and_path(params):
              to_pt=params.obstacle_b.as_np()),
     ]
 
-    obstacle = Block(poly_pyt=np.asarray([
+    obstacle = Block(poly_pt=np.asarray([
         params.obstacle_o.as_np(),
         params.obstacle_a.as_np(),
         params.obstacle_b.as_np()
