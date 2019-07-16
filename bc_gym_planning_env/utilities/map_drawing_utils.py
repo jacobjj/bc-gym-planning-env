@@ -181,6 +181,20 @@ def _mark_wall_on_static_map(static_map, p0, p1, width, color):
              thickness=thickness)
 
 
+def _mark_block_on_static_map(static_map, poly_pt, color):
+    """
+    Draw block on a static map.
+    :param static_map: static map to put block on
+    :param point_pt: dimensions of the polygon
+    :param color: color of the block on static map
+    """
+    vertices = np.array([
+        world_to_pixel(np.array(p), static_map.get_origin(),
+                       static_map.get_resolution()) for p in poly_pt
+    ]).astype(np.int32)
+    cv2.fillPoly(static_map.get_data(), [vertices], color)
+
+
 def add_block_to_static_map(static_map,
                             poly_pt,
                             cost=CostMap2D.LETHAL_OBSTACLE):
@@ -188,9 +202,9 @@ def add_block_to_static_map(static_map,
     Draw a polygon block on the costmap.
     :param static_map: static map to put block on
     :param poly_pt: the set of points that describe the polygon
-    :param color: color of the block on static map
+    :param cost: cost of the block on static map
     """
-    cv2.fillPoly(static_map.get_data(), poly_pt, cost)
+    _mark_block_on_static_map(static_map, poly_pt, cost)
 
 
 def add_wall_to_static_map(static_map,
