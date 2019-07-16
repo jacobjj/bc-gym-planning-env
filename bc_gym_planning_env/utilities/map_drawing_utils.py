@@ -190,7 +190,7 @@ def add_block_to_static_map(static_map,
     :param poly_pt: the set of points that describe the polygon
     :param color: color of the block on static map
     """
-    cv2.fillpoly(static_map.get_data, poly_pt, cost)
+    cv2.fillPoly(static_map.get_data(), poly_pt, cost)
 
 
 def add_wall_to_static_map(static_map,
