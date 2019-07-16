@@ -10,16 +10,16 @@ from __future__ import division
 import cv2
 import numpy as np
 
-
 from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
 from bc_gym_planning_env.utilities.path_tools import get_pixel_footprint, blit
 from bc_gym_planning_env.utilities.coordinate_transformations import world_to_pixel, pixel_to_world
 
-
 try:
     from brain.shining_utils.costmap_utils import world_to_pixel_drawing_impl
 except ImportError:
-    def world_to_pixel_drawing_impl(physical_coords, origin, resolution, map_height):
+
+    def world_to_pixel_drawing_impl(physical_coords, origin, resolution,
+                                    map_height):
         """
         World to pixel with a flip
         :param physical_coords: either (x, y)  or n x 2 array of (x, y), in physical units
@@ -34,7 +34,11 @@ except ImportError:
         return pixel_coords
 
 
-def get_drawing_coordinates_from_physical(map_shape, resolution, origin, physical_coords, enforce_bounds=False):
+def get_drawing_coordinates_from_physical(map_shape,
+                                          resolution,
+                                          origin,
+                                          physical_coords,
+                                          enforce_bounds=False):
     """
     Get drawing coordintats from physical coordinates
 
@@ -48,10 +52,14 @@ def get_drawing_coordinates_from_physical(map_shape, resolution, origin, physica
     :return: same in coordinates suitable for drawing (y axis is flipped)
     """
     # flip the y because we flip image for display
-    pixel_coords = world_to_pixel_drawing_impl(np.array(physical_coords), origin, resolution, map_shape[0])
-    if enforce_bounds and (not (pixel_coords < map_shape[1::-1]).all() or (np.amin(pixel_coords) < 0)):
-        raise IndexError("Point %s, in pixels (%s) is outside the map (shape %s)." %
-                         (physical_coords, pixel_coords, map_shape))
+    pixel_coords = world_to_pixel_drawing_impl(np.array(physical_coords),
+                                               origin, resolution,
+                                               map_shape[0])
+    if enforce_bounds and (not (pixel_coords < map_shape[1::-1]).all() or
+                           (np.amin(pixel_coords) < 0)):
+        raise IndexError(
+            "Point %s, in pixels (%s) is outside the map (shape %s)." %
+            (physical_coords, pixel_coords, map_shape))
     return pixel_coords
 
 
@@ -65,7 +73,8 @@ def get_drawing_angle_from_physical(angle):
     return -angle
 
 
-def get_physical_coords_from_drawing(map_shape, resolution, origin, drawing_coords):
+def get_physical_coords_from_drawing(map_shape, resolution, origin,
+                                     drawing_coords):
     """
     Inverse of the get_drawing_coordinates_from_physical function
 
@@ -94,7 +103,10 @@ def get_physical_angle_from_drawing(angle):
     return -angle
 
 
-def get_pixel_footprint_for_drawing(angle, robot_footprint, map_resolution, fill=True):
+def get_pixel_footprint_for_drawing(angle,
+                                    robot_footprint,
+                                    map_resolution,
+                                    fill=True):
     """
     Return pixel footprint kernel for visualization of the robot.
     The footprint kernel is flipped.
@@ -106,14 +118,19 @@ def get_pixel_footprint_for_drawing(angle, robot_footprint, map_resolution, fill
     :param fill:  shuold we fill
     :return: picture of the footprint
     """
-    footprint_picture = get_pixel_footprint(angle,
-                                            robot_footprint, map_resolution, fill)
+    footprint_picture = get_pixel_footprint(angle, robot_footprint,
+                                            map_resolution, fill)
     footprint_picture = np.flipud(footprint_picture)
     return footprint_picture
 
 
-def draw_trajectory(array_to_draw, resolution, origin, trajectory, color=(0, 255, 0),
-                    enforce_bounds=False, thickness=1):
+def draw_trajectory(array_to_draw,
+                    resolution,
+                    origin,
+                    trajectory,
+                    color=(0, 255, 0),
+                    enforce_bounds=False,
+                    thickness=1):
     """
     Draw a trajectory on a map.
 
@@ -134,7 +151,10 @@ def draw_trajectory(array_to_draw, resolution, origin, trajectory, color=(0, 255
         trajectory[:, :2],
         enforce_bounds=enforce_bounds)
 
-    cv2.polylines(array_to_draw, [drawing_coords.astype(np.int64)], False, color, thickness=thickness)
+    cv2.polylines(array_to_draw, [drawing_coords.astype(np.int64)],
+                  False,
+                  color,
+                  thickness=thickness)
 
 
 def _mark_wall_on_static_map(static_map, p0, p1, width, color):
@@ -147,16 +167,37 @@ def _mark_wall_on_static_map(static_map, p0, p1, width, color):
     :param width: width of the wall
     :param color: color of the wall on static map
     """
-    thickness = max(1, int(width/static_map.get_resolution()))
-    cv2.line(
-        static_map.get_data(),
-        tuple(world_to_pixel(np.array(p0, dtype=np.float64), static_map.get_origin(), static_map.get_resolution())),
-        tuple(world_to_pixel(np.array(p1, dtype=np.float64), static_map.get_origin(), static_map.get_resolution())),
-        color=color,
-        thickness=thickness)
+    thickness = max(1, int(width / static_map.get_resolution()))
+    cv2.line(static_map.get_data(),
+             tuple(
+                 world_to_pixel(np.array(p0, dtype=np.float64),
+                                static_map.get_origin(),
+                                static_map.get_resolution())),
+             tuple(
+                 world_to_pixel(np.array(p1, dtype=np.float64),
+                                static_map.get_origin(),
+                                static_map.get_resolution())),
+             color=color,
+             thickness=thickness)
 
 
-def add_wall_to_static_map(static_map, p0, p1, width=0.05, cost=CostMap2D.LETHAL_OBSTACLE):
+def add_block_to_static_map(static_map,
+                            poly_pt,
+                            cost=CostMap2D.LETHAL_OBSTACLE):
+    """
+    Draw a polygon block on the costmap.
+    :param static_map: static map to put block on
+    :param poly_pt: the set of points that describe the polygon
+    :param color: color of the block on static map
+    """
+    cv2.fillpoly(static_map.get_data, poly_pt, cost)
+
+
+def add_wall_to_static_map(static_map,
+                           p0,
+                           p1,
+                           width=0.05,
+                           cost=CostMap2D.LETHAL_OBSTACLE):
     """
     Add wall to a static map
 
@@ -187,7 +228,7 @@ def prepare_canvas(shape):
     :param shape (W, H): shape of the canvas
     :return array(W, H, 3)[uint8]: BGR canvas for drawing
     """
-    return np.full(shape + (3,), 255, dtype=np.uint8)
+    return np.full(shape + (3, ), 255, dtype=np.uint8)
 
 
 def draw_world_map(img, costmap_data):
@@ -202,7 +243,12 @@ def draw_world_map(img, costmap_data):
     img[costmap == CostMap2D.NO_INFORMATION] = (20, 20, 20)
 
 
-def draw_wide_path(img, path, robot_width, origin, resolution, color=(220, 220, 220)):
+def draw_wide_path(img,
+                   path,
+                   robot_width,
+                   origin,
+                   resolution,
+                   color=(220, 220, 220)):
     """
     Draw a path as a tube to follow
     :param img array(N, M, 3)[uint8]: BGR image on which to draw (mutates image)
@@ -213,16 +259,22 @@ def draw_wide_path(img, path, robot_width, origin, resolution, color=(220, 220, 
     :param color tuple[int]: BGR color tuple
     """
     drawing_coords = get_drawing_coordinates_from_physical(
-        img.shape,
-        resolution,
-        origin,
-        path[:, :2],
-        enforce_bounds=False)
+        img.shape, resolution, origin, path[:, :2], enforce_bounds=False)
 
-    cv2.polylines(img, [drawing_coords], False, color, thickness=int(robot_width / resolution))
+    cv2.polylines(img, [drawing_coords],
+                  False,
+                  color,
+                  thickness=int(robot_width / resolution))
 
 
-def draw_robot(image_to_draw, footprint, pose, resolution, origin, color=(30, 150, 30), color_axis=None, fill=True):
+def draw_robot(image_to_draw,
+               footprint,
+               pose,
+               resolution,
+               origin,
+               color=(30, 150, 30),
+               color_axis=None,
+               fill=True):
     """
     Print robot on an image
     :param image_to_draw: image to draw on
@@ -235,16 +287,23 @@ def draw_robot(image_to_draw, footprint, pose, resolution, origin, color=(30, 15
     :param fill: should we fill
     :return: px, py where the robot is on the picture
     """
-    px, py = get_drawing_coordinates_from_physical(image_to_draw.shape,
-                                                   resolution,
-                                                   origin,
-                                                   np.array(pose[0:2], dtype=np.float64))
-    kernel = get_pixel_footprint_for_drawing(pose[2], footprint, resolution, fill=fill)
+    px, py = get_drawing_coordinates_from_physical(
+        image_to_draw.shape, resolution, origin,
+        np.array(pose[0:2], dtype=np.float64))
+    kernel = get_pixel_footprint_for_drawing(pose[2],
+                                             footprint,
+                                             resolution,
+                                             fill=fill)
     blit(kernel, image_to_draw, px, py, color, axis=color_axis)
     return px, py
 
 
-def puttext_centered(im, text, pos, font=cv2.FONT_HERSHEY_PLAIN, size=0.6, color=(255, 255, 255)):
+def puttext_centered(im,
+                     text,
+                     pos,
+                     font=cv2.FONT_HERSHEY_PLAIN,
+                     size=0.6,
+                     color=(255, 255, 255)):
     """
     Put text on an image
     :param im: image to draw on
@@ -256,6 +315,7 @@ def puttext_centered(im, text, pos, font=cv2.FONT_HERSHEY_PLAIN, size=0.6, color
     """
     text_size, _ = cv2.getTextSize(text, font, size, 1)
     y = int(pos[1] + text_size[1] // 2)
-    x = int(pos[0] - text_size[0] // 2)  # it is complaining (integer argument expected)
+    x = int(pos[0] -
+            text_size[0] // 2)  # it is complaining (integer argument expected)
 
     cv2.putText(im, text, (x, y), font, size, color)
