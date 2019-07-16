@@ -11,7 +11,7 @@ from bc_gym_planning_env.robot_models.tricycle_model import TricycleRobot
 
 from bc_gym_planning_env.robot_models.robot_dimensions_examples import get_dimensions_example
 from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
-from bc_gym_planning_env.envs.base.maps import Wall
+from bc_gym_planning_env.envs.base.maps import Wall, Block
 from bc_gym_planning_env.envs.base.env import PlanEnv, pose_collides
 from bc_gym_planning_env.envs.base.params import EnvParams
 from bc_gym_planning_env.utilities.coordinate_transformations import angle_diff, cart2pol, pol2cart, \
@@ -390,6 +390,12 @@ def prepare_map_and_path(params):
              to_pt=params.obstacle_b.as_np()),
     ]
 
+    obstacle = Block(poly_pyt=np.asarray([
+        params.obstacle_o.as_np(),
+        params.obstacle_a.as_np(),
+        params.obstacle_b.as_np()
+    ]))
+
     coarse_static_path = np.array(
         [params.start_pos.as_np(),
          params.end_pos.as_np()])
@@ -400,8 +406,9 @@ def prepare_map_and_path(params):
         world_origin=(-params.h / 2., -params.w / 2.))
 
     if not params.turn_off_obstacles:
-        for obs in obstacles:
-            static_map = obs.render(static_map)
+        # for obs in obstacles:
+        #     static_map = obs.render(static_map)
+        obstacle.render(static_map)
 
     return static_map, coarse_static_path
 
