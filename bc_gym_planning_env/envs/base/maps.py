@@ -7,9 +7,8 @@ import attr
 import cv2
 import numpy as np
 
-
 from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
-from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map
+from bc_gym_planning_env.utilities.map_drawing_utils import add_wall_to_static_map, add_block_to_static_map
 from bc_gym_planning_env.utilities.path_tools import refine_path, orient_path
 
 
@@ -36,7 +35,24 @@ class Wall(object):
         :param costmap Costmap2D: Costmap to draw the wall on.
         :return Costmap2D: the costmap with the wall on it
         """
-        add_wall_to_static_map(costmap, self.from_pt, self.to_pt, width=costmap.get_resolution()*4)
+        add_wall_to_static_map(costmap,
+                               self.from_pt,
+                               self.to_pt,
+                               width=costmap.get_resolution() * 4)
+        return costmap
+
+
+@attr.s
+class Block(object):
+    """ A polygon object """
+    poly_pt = attr.ib(type=np.ndarray)
+
+    def render(self, costmap):
+        """
+        Render the polygon onto a costmap.
+        """
+        add_block_to_static_map(costmap, self.poly_pt)
+
         return costmap
 
 
@@ -70,11 +86,9 @@ def generate_trajectory_and_map_from_config(config):
     :return (path_to_follow, CostMap2D) pair: path following task specification
     """
 
-    static_map = CostMap2D.create_empty(
-        world_size=config.size,
-        resolution=config.resolution,
-        world_origin=config.origin
-    )
+    static_map = CostMap2D.create_empty(world_size=config.size,
+                                        resolution=config.resolution,
+                                        world_origin=config.origin)
 
     for obs in config.obstacles:
         static_map = obs.render(static_map)
@@ -95,21 +109,17 @@ def example_config():
         [6., 8.],
     ])
 
-    obs = generate_zigzag_walls(
-        trajectory=traj,
-        corridor_y_span=0.65,
-        corridor_x_span=0.975
-    )
+    obs = generate_zigzag_walls(trajectory=traj,
+                                corridor_y_span=0.65,
+                                corridor_x_span=0.975)
 
     traj = refine_path(orient_path(traj), 0.05)
 
-    config = MapConfig(
-        trajectory=traj,
-        obstacles=obs,
-        size=(10, 10),
-        resolution=0.03,
-        origin=(0, 0)
-    )
+    config = MapConfig(trajectory=traj,
+                       obstacles=obs,
+                       size=(10, 10),
+                       resolution=0.03,
+                       origin=(0, 0))
 
     return config
 
@@ -143,11 +153,9 @@ def load_costmap_from_img(img_fname):
     resolution = 0.03
     world_size = 10
 
-    static_map = CostMap2D.create_empty(
-        world_size=(world_size, world_size),
-        resolution=resolution,
-        world_origin=(0, 0)
-    )
+    static_map = CostMap2D.create_empty(world_size=(world_size, world_size),
+                                        resolution=resolution,
+                                        world_origin=(0, 0))
 
     img = cv2.imread(img_fname)
     # opencv loads bgr
