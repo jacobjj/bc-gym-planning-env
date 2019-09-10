@@ -224,7 +224,7 @@ class RandomAisleTurnEnv(object):
     if draw_new_turn_on_reset is True, it samples new turn
     on env.reset(), otherwise it keeps showing same turn.
     """
-    def __init__(self, params=None, draw_new_turn_on_reset=True, seed=None, rng=None):
+    def __init__(self, params=None, draw_new_turn_on_reset=True, seed=None, rng=None,iteration_timeout=1200,goal_spat_dist=1):
         """ Initialize Random Aisle Turn Planning Environment
         :param params EnvParams: environment parameters that can be used to customize the benchmark.
                            These are parameters of the base PlanEnv, and they are passed down there.
@@ -242,7 +242,7 @@ class RandomAisleTurnEnv(object):
 
         turn_params = self._draw_random_turn_params()
         if params is None:
-            params = EnvParams()
+            params = EnvParams(goal_spat_dist = goal_spat_dist,iteration_timeout)
         self._env_params = params
         self.config = AisleTurnEnvParams(turn_params=turn_params, env_params=self._env_params)
         self._env = AisleTurnEnv(self.config)
