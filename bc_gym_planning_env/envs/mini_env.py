@@ -445,7 +445,8 @@ class RandomMiniEnv(object):
                  seed=None,
                  rng=None,
                  iteration_timeout=1200,
-                 goal_spat_dist=1):
+                 goal_spat_dist=1,
+                 goal_ang_dist=np.pi/8.):
         """
         Initialize random mini environment.
 
@@ -457,7 +458,7 @@ class RandomMiniEnv(object):
         if params is None:
             self._params = RandomMiniEnvParams(
                 env_params=EnvParams(
-                    goal_ang_dist=np.pi / 8.,
+                    goal_ang_dist=goal_ang_dist,
                     goal_spat_dist=goal_spat_dist,
                     iteration_timeout=iteration_timeout,
                 ),
