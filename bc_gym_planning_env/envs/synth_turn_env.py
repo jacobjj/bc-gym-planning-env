@@ -236,7 +236,8 @@ class RandomAisleTurnEnv(object):
                  seed=None,
                  rng=None,
                  iteration_timeout=1200,
-                 goal_spat_dist=1):
+                 goal_spat_dist=1,
+                 goal_ang_dist=np.pi / 8):
         """ Initialize Random Aisle Turn Planning Environment
         :param params EnvParams: environment parameters that can be used to customize the benchmark.
                            These are parameters of the base PlanEnv, and they are passed down there.
@@ -254,8 +255,10 @@ class RandomAisleTurnEnv(object):
 
         turn_params = self._draw_random_turn_params()
         if params is None:
+
             params = EnvParams(iteration_timeout=iteration_timeout,
-                               goal_spat_dist=goal_spat_dist)
+                               goal_spat_dist=goal_spat_dist,
+                               goal_ang_dist=goal_ang_dist)
         self._env_params = params
         self.config = AisleTurnEnvParams(turn_params=turn_params,
                                          env_params=self._env_params)
