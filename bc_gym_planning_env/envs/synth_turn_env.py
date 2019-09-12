@@ -254,7 +254,7 @@ class RandomAisleTurnEnv(object):
 
         turn_params = self._draw_random_turn_params()
         if params is None:
-            params = EnvParams(iteration_timeout,
+            params = EnvParams(iteration_timeout=iteration_timeout,
                                goal_spat_dist=goal_spat_dist)
         self._env_params = params
         self.config = AisleTurnEnvParams(turn_params=turn_params,
