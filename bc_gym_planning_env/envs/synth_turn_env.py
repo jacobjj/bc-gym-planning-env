@@ -22,13 +22,20 @@ class TurnParams(object):
     """ Parametrization of a specific turn """
     main_corridor_length = attr.ib(default=8, type=float)
     turn_corridor_length = attr.ib(default=5, type=float)
-    turn_corridor_angle = attr.ib(default= 2 * np.pi / 8, type=float)   # angle of the turn
-    main_corridor_width = attr.ib(default=1.0, type=float)                  # width of the main corridor
-    turn_corridor_width = attr.ib(default=1.0, type=float)                  # width of the turn corridor
-    margin = attr.ib(default=1.0, type=float)             # how much wider should we make the world?
-    flip_arnd_oy = attr.ib(default=False, type=bool)   # should flip around oy axis?
-    flip_arnd_ox = attr.ib(default=False, type=bool)   # should flip around ox axis?
-    rot_theta = attr.ib(default=0, type=float)         # should rotate the whole problem?
+    turn_corridor_angle = attr.ib(default=2 * np.pi / 8,
+                                  type=float)  # angle of the turn
+    main_corridor_width = attr.ib(default=1.0,
+                                  type=float)  # width of the main corridor
+    turn_corridor_width = attr.ib(default=1.0,
+                                  type=float)  # width of the turn corridor
+    margin = attr.ib(default=1.0,
+                     type=float)  # how much wider should we make the world?
+    flip_arnd_oy = attr.ib(default=False,
+                           type=bool)  # should flip around oy axis?
+    flip_arnd_ox = attr.ib(default=False,
+                           type=bool)  # should flip around ox axis?
+    rot_theta = attr.ib(default=0,
+                        type=float)  # should rotate the whole problem?
 
 
 @attr.s
@@ -88,10 +95,11 @@ def _generate_path_in_standard_coords(d, h, alpha, z, w):
     :param w: half of the length of the corridor we will turn into.
     :return Tuple[np.ndarray]: Tuple of oriented way points == the path
     """
-    rb = np.array([0, -h, np.pi/2])
-    rk = np.array([0, d * np.tan(alpha) - z / np.cos(alpha), np.pi/2])
+    rb = np.array([0, -h, np.pi / 2])
+    rk = np.array([0, d * np.tan(alpha) - z / np.cos(alpha), np.pi / 2])
     rl = np.array([d, d * np.tan(alpha), alpha])
-    rf = np.array([w * np.cos(alpha), w * np.cos(alpha) * np.tan(alpha), alpha])
+    rf = np.array(
+        [w * np.cos(alpha), w * np.cos(alpha) * np.tan(alpha), alpha])
 
     return rb, rk, rl, rf
 
@@ -133,10 +141,8 @@ def path_and_costmap_from_config(params):
     # Maybe transform the points
     rot_mtx = _rotation_matrix(rot_theta)
 
-    flipping_mtx = np.array(
-        [[-1. if flip_arnd_oy else 1., 0.],
-         [0., -1. if flip_arnd_ox else 1.]],
-    )
+    flipping_mtx = np.array([[-1. if flip_arnd_oy else 1., 0.],
+                             [0., -1. if flip_arnd_ox else 1.]], )
     transform_mtx = np.dot(rot_mtx, flipping_mtx)
 
     new_pts = []
@@ -158,8 +164,8 @@ def path_and_costmap_from_config(params):
         new_pt = np.array([nx, ny, new_angle])
         new_oriented_way_pts.append(new_pt)
 
-    a, _, c, d, e, _, g, h, i, j = new_pts   # pylint: disable=unbalanced-tuple-unpacking
-    rb, rk, rl, rf = new_oriented_way_pts    # pylint: disable=unbalanced-tuple-unpacking
+    a, _, c, d, e, _, g, h, i, j = new_pts  # pylint: disable=unbalanced-tuple-unpacking
+    rb, rk, rl, rf = new_oriented_way_pts  # pylint: disable=unbalanced-tuple-unpacking
     all_pts = np.array(list(new_pts))
 
     min_x = all_pts[:, 0].min()
@@ -167,7 +173,8 @@ def path_and_costmap_from_config(params):
     min_y = all_pts[:, 1].min()
     max_y = all_pts[:, 1].max()
 
-    world_size = abs(max_x - min_x) + 2 * margin, abs(max_y - min_y) + 2 * margin
+    world_size = abs(max_x - min_x) + 2 * margin, abs(max_y -
+                                                      min_y) + 2 * margin
     world_origin = min_x - margin, min_y - margin
 
     obstacles = [
@@ -183,8 +190,7 @@ def path_and_costmap_from_config(params):
     static_map = CostMap2D.create_empty(
         world_size=world_size,  # x width, y height
         resolution=params.env_params.resolution,
-        world_origin=world_origin
-    )
+        world_origin=world_origin)
 
     for obs in obstacles:
         static_map = obs.render(static_map)
@@ -224,7 +230,13 @@ class RandomAisleTurnEnv(object):
     if draw_new_turn_on_reset is True, it samples new turn
     on env.reset(), otherwise it keeps showing same turn.
     """
-    def __init__(self, params=None, draw_new_turn_on_reset=True, seed=None, rng=None,iteration_timeout=1200,goal_spat_dist=1):
+    def __init__(self,
+                 params=None,
+                 draw_new_turn_on_reset=True,
+                 seed=None,
+                 rng=None,
+                 iteration_timeout=1200,
+                 goal_spat_dist=1):
         """ Initialize Random Aisle Turn Planning Environment
         :param params EnvParams: environment parameters that can be used to customize the benchmark.
                            These are parameters of the base PlanEnv, and they are passed down there.
@@ -242,9 +254,11 @@ class RandomAisleTurnEnv(object):
 
         turn_params = self._draw_random_turn_params()
         if params is None:
-            params = EnvParams(goal_spat_dist = goal_spat_dist,iteration_timeout)
+            params = EnvParams(iteration_timeout,
+                               goal_spat_dist=goal_spat_dist)
         self._env_params = params
-        self.config = AisleTurnEnvParams(turn_params=turn_params, env_params=self._env_params)
+        self.config = AisleTurnEnvParams(turn_params=turn_params,
+                                         env_params=self._env_params)
         self._env = AisleTurnEnv(self.config)
 
         self.action_space = self._env.action_space
@@ -285,7 +299,8 @@ class RandomAisleTurnEnv(object):
         """
         if self._draw_new_turn_on_reset:
             turn_params = self._draw_random_turn_params()
-            config = AisleTurnEnvParams(turn_params=turn_params, env_params=self._env_params)
+            config = AisleTurnEnvParams(turn_params=turn_params,
+                                        env_params=self._env_params)
             self._env = AisleTurnEnv(config)
 
         return self._env.reset()
@@ -320,16 +335,15 @@ class RandomAisleTurnEnv(object):
 
         :return TurnParams: Random turn params
         """
-        return TurnParams(
-            main_corridor_length=self._rng.uniform(10, 16),
-            turn_corridor_length=self._rng.uniform(4, 12),
-            turn_corridor_angle=self._rng.uniform(-3./8. * np.pi, 3./8.*np.pi),
-            main_corridor_width=self._rng.uniform(0.5, 1.5),
-            turn_corridor_width=self._rng.uniform(0.5, 1.5),
-            flip_arnd_oy=bool(self._rng.rand() < 0.5),
-            flip_arnd_ox=bool(self._rng.rand() < 0.5),
-            rot_theta=self._rng.uniform(0, 2*np.pi)
-        )
+        return TurnParams(main_corridor_length=self._rng.uniform(10, 16),
+                          turn_corridor_length=self._rng.uniform(4, 12),
+                          turn_corridor_angle=self._rng.uniform(
+                              -3. / 8. * np.pi, 3. / 8. * np.pi),
+                          main_corridor_width=self._rng.uniform(0.5, 1.5),
+                          turn_corridor_width=self._rng.uniform(0.5, 1.5),
+                          flip_arnd_oy=bool(self._rng.rand() < 0.5),
+                          flip_arnd_ox=bool(self._rng.rand() < 0.5),
+                          rot_theta=self._rng.uniform(0, 2 * np.pi))
 
 
 class ColoredCostmapRandomAisleTurnEnv(RandomAisleTurnEnv):
@@ -338,7 +352,10 @@ class ColoredCostmapRandomAisleTurnEnv(RandomAisleTurnEnv):
         super(ColoredCostmapRandomAisleTurnEnv, self).__init__()
         # TODO: Will need some trickery to do it fully openai gym style
         # As openai gym style requires knowing resolution of the image up front
-        self.observation_space = spaces.Box(low=0, high=255, shape=(510, 264, 1), dtype=np.uint8)
+        self.observation_space = spaces.Box(low=0,
+                                            high=255,
+                                            shape=(510, 264, 1),
+                                            dtype=np.uint8)
 
     def step(self, action):
         """
@@ -354,8 +371,9 @@ class ColoredCostmapRandomAisleTurnEnv(RandomAisleTurnEnv):
         :param action: (wheel_v, wheel_angle)
         :return Tuple[np.ndarray, float, bool, Dict]: the stuff env shuold return
         """
-        rich_obs, reward, done, info = super(ColoredCostmapRandomAisleTurnEnv, self).step(action)
-        obs = rich_obs.costmap.get_data()   # pylint: disable=no-member
+        rich_obs, reward, done, info = super(ColoredCostmapRandomAisleTurnEnv,
+                                             self).step(action)
+        obs = rich_obs.costmap.get_data()  # pylint: disable=no-member
         obs = np.expand_dims(obs, -1)
         return obs, reward, done, info
 
@@ -368,7 +386,7 @@ class ColoredCostmapRandomAisleTurnEnv(RandomAisleTurnEnv):
                               to be fed to agent as the initial observation.
         """
         rich_obs = super(ColoredCostmapRandomAisleTurnEnv, self).reset()
-        obs = rich_obs.costmap.get_data()   # pylint: disable=no-member
+        obs = rich_obs.costmap.get_data()  # pylint: disable=no-member
         obs = np.expand_dims(obs, -1)
         return obs
 
@@ -376,22 +394,33 @@ class ColoredCostmapRandomAisleTurnEnv(RandomAisleTurnEnv):
 class ColoredEgoCostmapRandomAisleTurnEnv(RandomAisleTurnEnv):
     """ Random Aisle Turn environment, but the observation is a colored egocentric
     costmap and normalized goal coordinates. """
-
     def __init__(self):
         super(ColoredEgoCostmapRandomAisleTurnEnv, self).__init__()
         # TODO: Will need some trickery to do it fully openai gym style
         # As openai gym style requires knowing resolution of the image up front
-        self._egomap_x_bounds = np.array([-0.5, 3.5])  # aligned with robot's direction
-        self._egomap_y_bounds = np.array([-2., 2.])  # orthogonal to robot's direction
+        self._egomap_x_bounds = np.array([-0.5, 3.5
+                                          ])  # aligned with robot's direction
+        self._egomap_y_bounds = np.array([-2., 2.
+                                          ])  # orthogonal to robot's direction
         resulting_size = (self._egomap_x_bounds[1] - self._egomap_x_bounds[0],
                           self._egomap_y_bounds[1] - self._egomap_y_bounds[0])
 
-        pixel_size = world_to_pixel(np.asarray(resulting_size, dtype=np.float64), np.zeros((2,)), resolution=0.03)
+        pixel_size = world_to_pixel(np.asarray(resulting_size,
+                                               dtype=np.float64),
+                                    np.zeros((2, )),
+                                    resolution=0.03)
         data_shape = (pixel_size[1], pixel_size[0], 1)
-        self.observation_space = spaces.Dict(OrderedDict((
-            ('environment', spaces.Box(low=0, high=255, shape=data_shape, dtype=np.uint8)),
-            ('goal', spaces.Box(low=-1., high=1., shape=(5, 1), dtype=np.float64))
-        )))
+        self.observation_space = spaces.Dict(
+            OrderedDict((('environment',
+                          spaces.Box(low=0,
+                                     high=255,
+                                     shape=data_shape,
+                                     dtype=np.uint8)),
+                         ('goal',
+                          spaces.Box(low=-1.,
+                                     high=1.,
+                                     shape=(5, 1),
+                                     dtype=np.float64)))))
 
     def _extract_egocentric_observation(self, rich_observation):
         """Extract egocentric map and path from rich observation
@@ -404,20 +433,24 @@ class ColoredEgoCostmapRandomAisleTurnEnv(RandomAisleTurnEnv):
         ego_costmap = extract_egocentric_costmap(
             costmap,
             robot_pose,
-            resulting_origin=(self._egomap_x_bounds[0], self._egomap_y_bounds[0]),
-            resulting_size=(self._egomap_x_bounds[1] - self._egomap_x_bounds[0],
-                            self._egomap_y_bounds[1] - self._egomap_y_bounds[0]))
+            resulting_origin=(self._egomap_x_bounds[0],
+                              self._egomap_y_bounds[0]),
+            resulting_size=(self._egomap_x_bounds[1] -
+                            self._egomap_x_bounds[0],
+                            self._egomap_y_bounds[1] -
+                            self._egomap_y_bounds[0]))
 
         ego_path = from_global_to_egocentric(rich_observation.path, robot_pose)
         obs = np.expand_dims(ego_costmap.get_data(), -1)
         normalized_goal = ego_path[-1, :2] / ego_costmap.world_size()
         normalized_goal = normalized_goal / np.linalg.norm(normalized_goal)
 
-        robot_egocentric_state = rich_observation.robot_state.egocentric_state_numpy_array()
+        robot_egocentric_state = rich_observation.robot_state.egocentric_state_numpy_array(
+        )
         goal_n_state = np.hstack([normalized_goal, robot_egocentric_state])
 
-        return OrderedDict((('environment', obs),
-                            ('goal', np.expand_dims(goal_n_state, -1))))
+        return OrderedDict(
+            (('environment', obs), ('goal', np.expand_dims(goal_n_state, -1))))
 
     def step(self, action):
         """
@@ -434,7 +467,8 @@ class ColoredEgoCostmapRandomAisleTurnEnv(RandomAisleTurnEnv):
         :return Tuple[OrderedDict, float, bool, Dict]: the stuff env shuold return
         """
         """ Action is a motion command """
-        rich_obs, reward, done, info = super(ColoredEgoCostmapRandomAisleTurnEnv, self).step(action)
+        rich_obs, reward, done, info = super(
+            ColoredEgoCostmapRandomAisleTurnEnv, self).step(action)
         obs = self._extract_egocentric_observation(rich_obs)
         return obs, reward, done, info
 
