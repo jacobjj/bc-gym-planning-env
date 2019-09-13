@@ -7,6 +7,7 @@ import attr
 import copy
 import numpy as np
 from bc_gym_planning_env.robot_models.tricycle_model import TricycleRobot
+from bc_gym_planning_env.robot_models.differential_drive import DiffDriveRobot
 from bc_gym_planning_env.robot_models.robot_dimensions_examples import get_dimensions_example
 from bc_gym_planning_env.robot_models.robot_examples_factory import create_standard_robot
 from bc_gym_planning_env.utilities.costmap_2d import CostMap2D
@@ -22,6 +23,7 @@ from bc_gym_planning_env.envs.base import spaces
 from bc_gym_planning_env.envs.base.reward_provider_examples_factory import\
     create_reward_provider_state, get_reward_provider_example
 from bc_gym_planning_env.utilities.gui import OpenCVGui
+from bc_gym_planning_env.robot_models.standard_robot_names_examples import StandardRobotExamples
 
 
 def _get_element_from_list_with_delay(item_list, element, delay):
@@ -223,7 +225,6 @@ def make_initial_state(path, costmap, robot, reward_provider, params):
 
 class PlanEnv(Serializable):
     """ Poses planning problem as OpenAI gym task. """
-
     def __init__(self, costmap, path, params):
         """
         :param costmap CostMap2D: costmap denoting obstacles
@@ -231,20 +232,29 @@ class PlanEnv(Serializable):
         :param params EnvParams: parametrization of the environment
         """
         # Stateful things
-        self._robot = TricycleRobot(
-            dimensions=get_dimensions_example(params.robot_name))
+        self._robot = create_standard_robot(params.robot_name)
+        # self._robot = TricycleRobot(
+        #     dimensions=get_dimensions_example(params.robot_name))
         reward_provider_example = get_reward_provider_example(
             params.reward_provider_name)
         self._reward_provider = reward_provider_example(
             params=params.reward_provider_params)
 
         # Properties, things without state
-        self.action_space = spaces.Box(
-            low=np.array(
-                [self._robot.get_max_front_wheel_speed() / 10, -np.pi / 2]),
-            high=np.array(
-                [self._robot.get_max_front_wheel_speed() / 2, np.pi / 2]),
-            dtype=np.float32)
+        if params.robot_name == StandardRobotExamples.INDUSTRIAL_TRICYCLE_V1:
+            self.action_space = spaces.Box(
+                low=np.array(
+                    [self._robot.get_max_front_wheel_speed() / 10,
+                     -np.pi / 2]),
+                high=np.array(
+                    [self._robot.get_max_front_wheel_speed() / 2, np.pi / 2]),
+                dtype=np.float32)
+        else:
+            self.action_space = spaces.Box(
+                low=np.array([0, -1.086]),
+                high=np.array([1.047, 1.086]),
+                dtype=np.float32,
+            )
         self.reward_range = (0.0, 1.0)
         self._gui = OpenCVGui()
         self._params = params
