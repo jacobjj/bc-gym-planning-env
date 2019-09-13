@@ -255,7 +255,6 @@ def _pick_pts_circle_method(rng, params, obstacle_o, obstacle_start_angle,
     :param obstacle_angle float: how wide angularly is the obstacle
     :return MiniEnvParams: sampled params of the environment
     """
-
     def not_inside_obstacle(pt):
         _, phi = cart2pol(pt.x - obstacle_o.x, pt.y - obstacle_o.y)
         if (phi >= obstacle_start_angle) and (
@@ -419,7 +418,6 @@ class MiniEnv(PlanEnv):
     is to run from point to point and these are not too far.
     In the environment there is only one obstacle.
     """
-
     def __init__(self, config):
         """
         initialize the MiniEnv
@@ -437,7 +435,6 @@ class RandomMiniEnv(object):
     if draw_new_turn_on_reset is True, it samples new turn
     on env.reset(), otherwise it keeps showing same turn.
     """
-
     def __init__(self,
                  params=None,
                  draw_new_turn_on_reset=True,
@@ -446,7 +443,7 @@ class RandomMiniEnv(object):
                  rng=None,
                  iteration_timeout=1200,
                  goal_spat_dist=1,
-                 goal_ang_dist=np.pi/8.):
+                 goal_ang_dist=np.pi / 8.):
         """
         Initialize random mini environment.
 
@@ -465,7 +462,8 @@ class RandomMiniEnv(object):
                 turn_off_obstacles=turn_off_obstacles,
             )
         else:
-            self._params = params
+            self._params = RandomMiniEnvParams(
+                env_params=params, turn_off_obstacles=turn_off_obstacles)
 
         if rng is None:
             self._rng = np.random.RandomState(seed=0)
